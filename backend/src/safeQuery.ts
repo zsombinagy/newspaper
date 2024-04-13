@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { string, z } from "zod";
 import { Client } from "pg";
 
 export const ItemSchema = z.object({
@@ -98,17 +98,36 @@ export const selectQuery = async <Schema extends z.ZodTypeAny>(
   };
 };
 
-type ItemType = z.infer<typeof ItemSchema>;
-
 const formatQueryParams = (params: string): string => {
   return params.split("'").join("''");
 };
 
+type insertObjectType<T> = {
+  [key: string]: T;
+};
 export const insertQuery = async (
   table: string,
-  item: ItemType | Omit<ItemType, "id" | "counter">
+  object: insertObjectType<string | number>
 ) => {
-  const checkIfIdIsOnItem = "id" in item;
+  let propertyListing: string[] = [];
+  let valuesListing: (number | string)[] = [];
+  for (const key in object) {
+    propertyListing = [...propertyListing, key];
+    if (typeof object[key] === "string") {
+      valuesListing = [...valuesListing, formatQueryParams(object[key] as string),
+      ];
+    } else {
+      valuesListing = [...valuesListing, object[key]];
+    }
+  }
+
+  const response = await clientQuery(
+    `INSERT INTO ${table} (${propertyListing.join(",")})
+    VALUES (${valuesListing.map((value) => `'${value}'`).join(",")})
+    
+    `
+  );
+  /*   const checkIfIdIsOnItem = "id" in item;
 
   const response = await clientQuery(
     `INSERT INTO ${table} (${
@@ -120,7 +139,7 @@ export const insertQuery = async (
      '${formatQueryParams(item.image)}', '${
       checkIfIdIsOnItem === true ? "1" : "0"
     }')`
-  );
+  );  */
   if (!response.success)
     return {
       success: false,
