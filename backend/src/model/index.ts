@@ -16,6 +16,9 @@ const SubsectionSchema = z.object({
 /*     contents: ContentSchema.array(), */
 })
 
+const EmptyArraySchema = z.array(z.never())
+
+
 
 const SourceSchema = z.object({
     id: z.string(),
@@ -27,6 +30,7 @@ const SourceSchema = z.object({
     isDraft: z.boolean(),
     
 })
+
 
 const ArticleSchema = z.object({
     id: z.string(),

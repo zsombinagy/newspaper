@@ -1,4 +1,4 @@
-import { string, z } from "zod";
+import { Schema, string, z } from "zod";
 import { Client } from "pg";
 
 export const ItemSchema = z.object({
@@ -26,7 +26,7 @@ export const client = new Client({
     "postgresql://zsombinagy:Aucxj2q6hXDH@ep-little-water-a57bcge1.us-east-2.aws.neon.tech/neondb?sslmode=require",
 });
 
-const clientQuery = async (params: string) => {
+const clientQuery = async <Schema extends z.ZodTypeAny>(params: string, schema: Schema ): Promise<Response<z.infer<typeof schema>>> => {
   let response;
   try {
     response = await client.query(params);
@@ -35,7 +35,17 @@ const clientQuery = async (params: string) => {
       success: false,
       status: 500,
     };
+
+
+    
+
   }
+  let result = schema.safeParse(response.rows)
+  if (!result.success) 
+    return {
+      success: false,
+      status: 400,
+    };
   return {
     success: true,
     status: 200,
@@ -51,7 +61,7 @@ export const selectQuery = async <Schema extends z.ZodTypeAny>(
   if (object !== undefined) {
     const response = await clientQuery(
       `SELECT ${object.property} FROM ${table} WHERE id = '${object.id}'`
-    );
+    , schema);
     if (!response.success)
       return {
         success: false,
@@ -59,22 +69,14 @@ export const selectQuery = async <Schema extends z.ZodTypeAny>(
       };
 
     let data = response.data;
-    let result = schema.safeParse(data);
-    if (!result.success) {
-      console.log(result.error);
-      return {
-        success: false,
-        status: 400,
-      };
-    }
 
     return {
       success: true,
       status: response.status,
-      data: result.data,
+      data: data,
     };
   }
-  const response = await clientQuery(`SELECT * FROM ${table}`);
+  const response = await clientQuery(`SELECT * FROM ${table}`, schema);
   if (!response.success)
     return {
       success: false,
@@ -107,7 +109,8 @@ type insertObjectType<T> = {
 };
 export const insertQuery = async (
   table: string,
-  object: insertObjectType<string | number>
+  object: insertObjectType<string | number>,
+  schema: Schema
 ) => {
   let propertyListing: string[] = [];
   let valuesListing: (number | string)[] = [];
@@ -125,7 +128,7 @@ export const insertQuery = async (
     `INSERT INTO ${table} (${propertyListing.join(",")})
     VALUES (${valuesListing.map((value) => `'${value}'`).join(", ")})
     
-    `
+    `, schema
   );
   /*   const checkIfIdIsOnItem = "id" in item;
 
@@ -155,7 +158,8 @@ export const insertQuery = async (
 
 export const updateQuery = async (
   table: string,
-  object: insertObjectType<number | string>
+  object: insertObjectType<number | string>,
+  schema: Schema
 ) => {
 
   let dataToBeUpdated: string[] = []
@@ -171,7 +175,7 @@ export const updateQuery = async (
   }
   
   const response = await clientQuery(
-    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")}`
+    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")}`, schema
   )
 
 /*   const checkIfTitleIsOnItem = "title" in object;
@@ -217,8 +221,8 @@ export const updateQuery = async (
   }; 
 };
 
-export const deleteQuery = async (table: string, id: string) => {
-  const response = await clientQuery(`DELETE FROM ${table} WHERE id = '${id}'`);
+export const deleteQuery = async (table: string, id: string, schema: Schema) => {
+  const response = await clientQuery(`DELETE FROM ${table} WHERE id = '${id}'`, schema);
   if (!response.success)
     return {
       success: false,
