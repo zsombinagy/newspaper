@@ -128,8 +128,7 @@ export const insertQuery = async (
 
   const response = await clientQuery(
     `INSERT INTO ${table} (${propertyListing.join(",")})
-    VALUES (${valuesListing.map((value) => `'${value}'`).join(", ")})
-    
+    VALUES (${valuesListing.map((value) => `'${value}'`).join(", ")}),    
     `, schema
   );
 
@@ -148,8 +147,9 @@ export const insertQuery = async (
 
 export const updateQuery = async (
   table: string,
-  object: insertObjectType<number | string>,
-  schema: Schema
+  object: insertObjectType<number | string | boolean>,
+  schema: Schema,
+  id: string
 ): Promise<Response<z.infer<typeof schema>>> => {
 
   let dataToBeUpdated: string[] = []
@@ -163,9 +163,10 @@ export const updateQuery = async (
       dataToBeUpdated = [...dataToBeUpdated, keyValuePairsInCorrectForm]
     }
   }
+
   
   const response = await clientQuery(
-    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")}`, schema
+    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")} WHERE id = '${id}'`, schema
   )
 
 

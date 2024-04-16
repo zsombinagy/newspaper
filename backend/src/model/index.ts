@@ -32,6 +32,7 @@ export const ArticleSchema = z.object({
   topicId: z.string(),
   originalArticleUrl: z.string().url(),
   newsPortal: z.string(),
+  isDraft: z.string()
   /*     subsections: SubsectionSchema.array(),
     source: SourceSchema.array() */
 });
@@ -39,7 +40,7 @@ export const ArticleSchema = z.object({
 export const TopicSchema = z.object({
   id: z.string(),
   title: z.string(),
-  isDraft: z.boolean()
+  isDraft: z.boolean(),
   /* articles: ArticleSchema.array(), */
 });
 
@@ -49,33 +50,35 @@ export const AdminSchema = z.object({
   password: z.string(),
 });
 
-export const PostNewTopicSchema = z.object({
-  title: z.string(),
-  articles: z
+export const PostNewArticle = z.object({
+  originalArticleUrl: z.string().url(),
+  newsPortal: z.string(),
+  subsections: z
     .object({
-      originalArticleUrl: z.string().url(),
-      newsPortal: z.string(),
-      subsections: z
-        .object({
-          title: z.string(),
-          contents: z.object({
-            content: z.string(),
-            isDraft: z.boolean(),
-            commitMessage: z.string(),
-          }),
-        })
-        .array(),
-      sources: z
-        .object({
-          url: z.string().url(),
-          display: z.string(),
-          isDraft: z.boolean(),
-        })
-        .array(),
+      title: z.string(),
+      contents: z.object({
+        content: z.string(),
+        isDraft: z.boolean(),
+        commitMessage: z.string(),
+      }),
     })
     .array(),
-    isDraft: z.boolean()
+  sources: z
+    .object({
+      url: z.string().url(),
+      display: z.string(),
+      isDraft: z.boolean(),
+    })
+    .array(),
+    isDraft: z.string()
 });
+
+export const PostNewTopicSchema = z.object({
+  title: z.string(),
+  articles: PostNewArticle.array(),
+  isDraft: z.boolean(),
+});
+
 
 export const EmptyArraySchema = z.array(z.never());
 
