@@ -107,13 +107,15 @@ const formatQueryParams = (params: string): string => {
 type insertObjectType<T> = {
   [key: string]: T;
 };
+
+
 export const insertQuery = async (
   table: string,
-  object: insertObjectType<string | number>,
+  object: insertObjectType<string | number | boolean | Date>,
   schema: Schema
-) => {
+): Promise<Response<z.infer<typeof schema>>> => {
   let propertyListing: string[] = [];
-  let valuesListing: (number | string)[] = [];
+  let valuesListing: (string | number | boolean | Date)[] = [];
   for (const key in object) {
     propertyListing = [...propertyListing, key];
     if (typeof object[key] === "string") {
@@ -130,19 +132,7 @@ export const insertQuery = async (
     
     `, schema
   );
-  /*   const checkIfIdIsOnItem = "id" in item;
 
-  const response = await clientQuery(
-    `INSERT INTO ${table} (${
-      checkIfIdIsOnItem === true ? "id," : ""
-    }title, price, description, image, counter)
-     VALUES (${checkIfIdIsOnItem ? `'${item.id}',` : ""} '${formatQueryParams(
-      item.title
-    )}', '${+item.price}', '${formatQueryParams(item.description)}',
-     '${formatQueryParams(item.image)}', '${
-      checkIfIdIsOnItem === true ? "1" : "0"
-    }')`
-  );  */
   if (!response.success)
     return {
       success: false,
@@ -160,7 +150,7 @@ export const updateQuery = async (
   table: string,
   object: insertObjectType<number | string>,
   schema: Schema
-) => {
+): Promise<Response<z.infer<typeof schema>>> => {
 
   let dataToBeUpdated: string[] = []
   for (const key in object) {
@@ -178,35 +168,6 @@ export const updateQuery = async (
     `UPDATE ${table} SET ${dataToBeUpdated.join(", ")}`, schema
   )
 
-/*   const checkIfTitleIsOnItem = "title" in object;
-  if (checkIfTitleIsOnItem) {
-    const response = await clientQuery(
-      `UPDATE ${table} SET title = '${formatQueryParams(
-        object.title
-      )}', price = '${+object.price}', description = '${formatQueryParams(
-        object.description
-      )}', image = '${formatQueryParams(object.image)}' WHERE id = '${
-        object.id
-      }'`
-    );
-    if (!response.success)
-      return {
-        success: false,
-        status: response.status,
-      };
-
-    return {
-      success: true,
-      status: response.status,
-      data: "Success",
-    };
-  }
-
-  const response = await clientQuery(`
-  UPDATE ${table} SET counter = counter ${
-    object.plus === true ? "+" : "-"
-  } 1 WHERE id = '${object.id}'
-  `); */
 
   if (!response.success)
     return {
@@ -221,7 +182,7 @@ export const updateQuery = async (
   }; 
 };
 
-export const deleteQuery = async (table: string, id: string, schema: Schema) => {
+export const deleteQuery = async (table: string, id: string, schema: Schema): Promise<Response<z.infer<typeof schema>>> => {
   const response = await clientQuery(`DELETE FROM ${table} WHERE id = '${id}'`, schema);
   if (!response.success)
     return {
