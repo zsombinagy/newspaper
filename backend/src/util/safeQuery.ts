@@ -31,6 +31,7 @@ const clientQuery = async <Schema extends z.ZodTypeAny>(params: string, schema: 
   try {
     response = await client.query(params);
   } catch (error) {
+    console.log(error)
     return {
       success: false,
       status: 500,
@@ -41,15 +42,19 @@ const clientQuery = async <Schema extends z.ZodTypeAny>(params: string, schema: 
 
   }
   let result = schema.safeParse(response.rows)
-  if (!result.success) 
+
+  if (!result.success) {
+    console.log(result.error) 
     return {
       success: false,
       status: 400,
     };
+  }
+ 
   return {
     success: true,
     status: 200,
-    data: response.rows,
+    data: result.data,
   };
 };
 
@@ -59,8 +64,11 @@ export const selectQuery = async <Schema extends z.ZodTypeAny>(
   object?: { id: string; property: string }
 ): Promise<Response<z.infer<typeof schema>>> => {
   if (object !== undefined) {
+
     const response = await clientQuery(
-      `SELECT ${object.property} FROM ${table} WHERE id = '${object.id}'`
+      `SELECT ${object.property} FROM ${table} WHERE id = '${object.id}'
+      
+      `
     , schema);
     if (!response.success)
       return {
@@ -84,19 +92,12 @@ export const selectQuery = async <Schema extends z.ZodTypeAny>(
     };
 
   let data = response.data;
-  let result = schema.safeParse(data);
-  if (!result.success) {
-    console.log(result.error);
-    return {
-      success: false,
-      status: 400,
-    };
-  }
+
 
   return {
     success: true,
     status: response.status,
-    data: result.data,
+    data: data,
   };
 };
 
@@ -128,7 +129,8 @@ export const insertQuery = async (
 
   const response = await clientQuery(
     `INSERT INTO ${table} (${propertyListing.join(",")})
-    VALUES (${valuesListing.map((value) => `'${value}'`).join(", ")}),    
+    VALUES (${valuesListing.map((value) => `'${value}'`).join(", ")})
+    RETURNING id   
     `, schema
   );
 
@@ -141,7 +143,7 @@ export const insertQuery = async (
   return {
     success: true,
     status: response.status,
-    data: "Success",
+    data: response.data,
   };
 };
 
@@ -166,7 +168,9 @@ export const updateQuery = async (
 
   
   const response = await clientQuery(
-    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")} WHERE id = '${id}'`, schema
+    `UPDATE ${table} SET ${dataToBeUpdated.join(", ")} WHERE id = '${id}'
+    RETURNING id
+    `, schema
   )
 
 
@@ -183,8 +187,10 @@ export const updateQuery = async (
   }; 
 };
 
-export const deleteQuery = async (table: string, id: string, schema: Schema): Promise<Response<z.infer<typeof schema>>> => {
-  const response = await clientQuery(`DELETE FROM ${table} WHERE id = '${id}'`, schema);
+export const deleteQuery = async (table: string, keyValuePair: {[key: string]: string}, schema: Schema): Promise<Response<z.infer<typeof schema>>> => {
+  const key = Object.keys(keyValuePair)[0]
+
+  const response = await clientQuery(`DELETE FROM ${table} WHERE ${key} = '${keyValuePair[key]}' RETURNING id`, schema);
   if (!response.success)
     return {
       success: false,
@@ -194,6 +200,6 @@ export const deleteQuery = async (table: string, id: string, schema: Schema): Pr
   return {
     success: true,
     status: response.status,
-    data: "Success",
+    data: response.data,
   };
 };
