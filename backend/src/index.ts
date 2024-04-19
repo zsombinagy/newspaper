@@ -35,7 +35,7 @@ type ArticleType = z.infer<typeof ArticleSchema>;
 type ContentType = z.infer<typeof ContentSchema>;
 type SubsectionType = z.infer<typeof SubsectionSchema>;
 type TopicType = z.infer<typeof TopicSchema>;
-type IdArrayType = z.infer<typeof ReturningIdSchema>
+type IdArrayType = z.infer<typeof ReturningIdSchema>;
 
 const safeVerify = <Schema extends z.ZodTypeAny>(
   token: string,
@@ -49,7 +49,6 @@ const safeVerify = <Schema extends z.ZodTypeAny>(
   }
 };
 client.connect();
-
 
 server.use(async (req, res, next) => {
   const result = HeadersSchema.safeParse(req.headers);
@@ -76,7 +75,6 @@ server.use(async (req, res, next) => {
 
 type Admin = z.infer<typeof AdminSchema>;
 
-
 server.post("/api/newTopic", async (req, res) => {
   /*  const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
@@ -97,10 +95,10 @@ server.post("/api/newTopic", async (req, res) => {
   const responsePostTopic = await insertQuery(
     "topic",
     postNewTopic,
-    ReturningIdSchema)
+    ReturningIdSchema
+  );
   if (!responsePostTopic.success)
     return res.sendStatus(responsePostTopic.status);
-
 
   const topicId = responsePostTopic.data[0].id;
 
@@ -117,7 +115,7 @@ server.post("/api/newTopic", async (req, res) => {
       isdraft: article.isdraft,
     };
 
-    console.log(postNewArticle)
+    console.log(postNewArticle);
 
     const responsePostArticle = await insertQuery(
       "article",
@@ -127,17 +125,14 @@ server.post("/api/newTopic", async (req, res) => {
     if (!responsePostArticle.success)
       return res.sendStatus(responsePostArticle.status);
 
-
-
     const articleId = responsePostArticle.data[0].id;
 
     /*insert all subsection sql */
-      for (const subsection of article.subsections)  {
-
-      const postNewSubsection: Omit<SubsectionType, 'id'>= {
+    for (const subsection of article.subsections) {
+      const postNewSubsection: Omit<SubsectionType, "id"> = {
         title: subsection.title,
-        articleid: articleId
-      }
+        articleid: articleId,
+      };
 
       const responsePostSubsection = await insertQuery(
         "subsection",
@@ -145,15 +140,12 @@ server.post("/api/newTopic", async (req, res) => {
         ReturningIdSchema
       );
       if (!responsePostSubsection.success)
-        return res.sendStatus(responsePostSubsection.status); 
+        return res.sendStatus(responsePostSubsection.status);
 
-
-      const subsectionId = responsePostSubsection.data[0].id
-      
-
+      const subsectionId = responsePostSubsection.data[0].id;
 
       /*insert content sql */
-      const subsectionContent: Omit<ContentType, 'id'> = {
+      const subsectionContent: Omit<ContentType, "id"> = {
         blockid: subsectionId,
         content: subsection.contents.content,
         date: date,
@@ -168,12 +160,12 @@ server.post("/api/newTopic", async (req, res) => {
       );
       if (!responsePostContent.success)
         return res.sendStatus(responsePostContent.status);
-    }; 
+    }
 
     /*insert all sources sql */
 
-    for (const source of article.sources)  {
-      const sourcePost: Omit<SourceType, 'id'> = {
+    for (const source of article.sources) {
+      const sourcePost: Omit<SourceType, "id"> = {
         articleid: articleId,
         url: source.url,
         display: source.display,
@@ -190,14 +182,14 @@ server.post("/api/newTopic", async (req, res) => {
       if (!responsePostSource.success)
         return res.sendStatus(responsePostSource.status);
     }
-  };
+  }
 
   res.json("Success");
 });
 
 // post new article to a topic
 server.post("/api/:topicId/article", async (req, res) => {
-/*   const admin = res.locals.admin as Admin;
+  /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
 
   const topicId = req.params.topicId;
@@ -223,13 +215,10 @@ server.post("/api/:topicId/article", async (req, res) => {
   if (!responsePostArticle.success)
     return res.sendStatus(responsePostArticle.status);
 
-
   const articleId = responsePostArticle.data[0].id;
 
   /*insert all subsection sql */
   newArticle.subsections.map(async (subsection) => {
-
-
     const postNewSubsection: Omit<SubsectionType, "id"> = {
       title: subsection.title,
       articleid: articleId,
@@ -243,8 +232,7 @@ server.post("/api/:topicId/article", async (req, res) => {
     if (!responsePostSubsection.success)
       return res.sendStatus(responsePostSubsection.status);
 
-
-    const subsectionId = responsePostSubsection.data[0].id
+    const subsectionId = responsePostSubsection.data[0].id;
 
     /*insert content sql */
 
@@ -290,7 +278,7 @@ server.post("/api/:topicId/article", async (req, res) => {
 
 //change topic title
 server.patch("/api/:topicId", async (req, res) => {
-/*   const admin = res.locals.admin as Admin;
+  /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
 
   const topicId = req.params.topicId;
@@ -318,7 +306,7 @@ server.patch("/api/:topicId", async (req, res) => {
 
 // change , articleURL, newsPortal
 server.patch("/api/topic/:articleId", async (req, res) => {
-/*   const admin = res.locals.admin as Admin;
+  /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401);
  */
   const articleId = req.params.articleId;
@@ -327,9 +315,9 @@ server.patch("/api/topic/:articleId", async (req, res) => {
     req.body
   );
   if (!result.success) {
-    console.log(result.error)
+    console.log(result.error);
     return res.sendStatus(400);
-  } 
+  }
 
   const article = result.data;
 
@@ -351,14 +339,14 @@ server.patch("/api/topic/:articleId", async (req, res) => {
 
 // change subsection content,
 server.post("/api/topic/article/:subsectionId/content", async (req, res) => {
-/*   const admin = res.locals.admin as Admin;
+  /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
 
   const result = ContentSchema.omit({
     id: true,
     date: true,
     admin: true,
-    blockid: true
+    blockid: true,
   }).safeParse(req.body);
   if (!result.success) return res.sendStatus(400);
 
@@ -388,14 +376,14 @@ server.post("/api/topic/article/:subsectionId/content", async (req, res) => {
 
 // change source content, url, display
 server.post("/api/topic/:articleId/source", async (req, res) => {
-/*   const admin = res.locals.admin as Admin;
+  /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
 
   const result = SourceSchema.omit({
     id: true,
     date: true,
     admin: true,
-    articleid: true
+    articleid: true,
   }).safeParse(req.body);
   if (!result.success) return res.sendStatus(400);
 
@@ -423,107 +411,175 @@ server.post("/api/topic/:articleId/source", async (req, res) => {
   res.json("Success");
 });
 
-server.delete("/api/:topicId", async ( req, res) =>{
+server.delete("/api/:topicId", async (req, res) => {
   /*   const admin = res.locals.admin as Admin;
   if (!admin) return res.sendStatus(401); */
-  const topicId = req.params.topicId
+  const topicId = req.params.topicId;
 
-  const deleteTopicResponse = await deleteQuery('topic', {id: topicId}, ReturningIdSchema)
+  const deleteTopicResponse = await deleteQuery(
+    "topic",
+    { id: topicId },
+    ReturningIdSchema
+  );
   if (!deleteTopicResponse.success)
     return res.sendStatus(deleteTopicResponse.status);
 
-
-  const deleteArticlesResponse = await deleteQuery('article', {topicid: topicId}, ReturningIdSchema)
+  const deleteArticlesResponse = await deleteQuery(
+    "article",
+    { topicid: topicId },
+    ReturningIdSchema
+  );
   if (!deleteArticlesResponse.success)
     return res.sendStatus(deleteArticlesResponse.status);
 
-  const articleIdArray: IdArrayType = deleteArticlesResponse.data
+  const articleIdArray: IdArrayType = deleteArticlesResponse.data;
 
   for (const article of articleIdArray) {
-    const id = article.id
+    const id = article.id;
 
-    const deleteSubsectionResponse = await deleteQuery('subsection', {articleid: id}, ReturningIdSchema)
+    const deleteSubsectionResponse = await deleteQuery(
+      "subsection",
+      { articleid: id },
+      ReturningIdSchema
+    );
     if (!deleteSubsectionResponse.success)
       return res.sendStatus(deleteSubsectionResponse.status);
 
-    const subsectionIdArray: IdArrayType = deleteSubsectionResponse.data
+    const subsectionIdArray: IdArrayType = deleteSubsectionResponse.data;
 
     for (const subsection of subsectionIdArray) {
-      const id = subsection.id
+      const id = subsection.id;
 
-      const deleteContentResponse = await deleteQuery('content', {blockid: id}, ReturningIdSchema)
+      const deleteContentResponse = await deleteQuery(
+        "content",
+        { blockid: id },
+        ReturningIdSchema
+      );
       if (!deleteContentResponse.success)
         return res.sendStatus(deleteContentResponse.status);
-
-
     }
-
-    for (const source of articleIdArray) {
-      const id = article.id
-
-      const deleteSourceResponse = await deleteQuery('subsection', {articleid: id}, ReturningIdSchema)
-      if (!deleteSourceResponse.success)
-        return res.sendStatus(deleteSourceResponse.status);
-    }
-  
-
+    const deleteSourceResponse = await deleteQuery(
+      "source",
+      { articleid: id },
+      ReturningIdSchema
+    );
+    if (!deleteSourceResponse.success)
+      return res.sendStatus(deleteSourceResponse.status);
   }
-
-
-
-
 });
 
 server.delete("/api/:topicId/article", async (req, res) => {
+    /*   const admin = res.locals.admin as Admin;
+  if (!admin) return res.sendStatus(401); */
 
-  const topicId = req.params.topicId
+  const topicId = req.params.topicId;
 
-  const deleteArticlesResponse = await deleteQuery('article', {topicid: topicId}, ReturningIdSchema)
+  const deleteArticlesResponse = await deleteQuery(
+    "article",
+    { topicid: topicId },
+    ReturningIdSchema
+  );
   if (!deleteArticlesResponse.success)
     return res.sendStatus(deleteArticlesResponse.status);
 
-  const articleIdArray: IdArrayType = deleteArticlesResponse.data
+  const articleIdArray: IdArrayType = deleteArticlesResponse.data;
 
   for (const article of articleIdArray) {
-    const id = article.id
+    const id = article.id;
 
-    const deleteSubsectionResponse = await deleteQuery('subsection', {articleid: id}, ReturningIdSchema)
+    const deleteSubsectionResponse = await deleteQuery(
+      "subsection",
+      { articleid: id },
+      ReturningIdSchema
+    );
     if (!deleteSubsectionResponse.success)
       return res.sendStatus(deleteSubsectionResponse.status);
 
-    const subsectionIdArray: IdArrayType = deleteSubsectionResponse.data
+    const subsectionIdArray: IdArrayType = deleteSubsectionResponse.data;
 
     for (const subsection of subsectionIdArray) {
-      const id = subsection.id
+      const id = subsection.id;
 
-      const deleteContentResponse = await deleteQuery('content', {blockid: id}, ReturningIdSchema)
+      const deleteContentResponse = await deleteQuery(
+        "content",
+        { blockid: id },
+        ReturningIdSchema
+      );
       if (!deleteContentResponse.success)
         return res.sendStatus(deleteContentResponse.status);
-
-
     }
 
-    for (const source of articleIdArray) {
-      const id = article.id
-
-      const deleteSourceResponse = await deleteQuery('subsection', {articleid: id}, ReturningIdSchema)
-      if (!deleteSourceResponse.success)
-        return res.sendStatus(deleteSourceResponse.status);
-    }
-  
-
+    const deleteSourceResponse = await deleteQuery(
+      "source",
+      { articleid: id },
+      ReturningIdSchema
+    );
+    if (!deleteSourceResponse.success)
+      return res.sendStatus(deleteSourceResponse.status);
   }
 
-
-  res.json("deleted")
+  res.json("deleted");
 });
 
-server.delete("/api/topic/:articleId/subsection");
+server.delete("/api/topic/:articleId/subsection", async (req, res) => {
+    /*   const admin = res.locals.admin as Admin;
+  if (!admin) return res.sendStatus(401); */
+  const id = req.params.articleId
+  const deleteSubsectionResponse = await deleteQuery(
+    "subsection",
+    { articleid: id },
+    ReturningIdSchema
+  );
+  if (!deleteSubsectionResponse.success)
+    return res.sendStatus(deleteSubsectionResponse.status);
 
-server.delete("/api/topic/:articleId/source");
+  const subsectionIdArray: IdArrayType = deleteSubsectionResponse.data;
+
+  for (const subsection of subsectionIdArray) {
+    const id = subsection.id;
+
+    const deleteContentResponse = await deleteQuery(
+      "content",
+      { blockid: id },
+      ReturningIdSchema
+    );
+    if (!deleteContentResponse.success)
+      return res.sendStatus(deleteContentResponse.status);
+  }
+  res.json("Deleted")
 
 
-server.delete("/api/topicId/article/subsection/:contentId");
+});
+
+server.delete("/api/topic/:articleId/source", async (req, res ) => {
+  const id = req.params.articleId
+
+  const deleteSourceResponse = await deleteQuery(
+    "source",
+    { articleid: id },
+    ReturningIdSchema
+  );
+  if (!deleteSourceResponse.success)
+    return res.sendStatus(deleteSourceResponse.status);
+
+  res.json("Deleted")
+
+});
+
+server.delete("/api/topicId/article/subsection/:contentId", async (req, res ) => {
+      /*   const admin = res.locals.admin as Admin;
+  if (!admin) return res.sendStatus(401); */
+  const id = req.params.contentId
+  const deleteContentResponse = await deleteQuery(
+    "content",
+    { id: id },
+    ReturningIdSchema
+  );
+
+  res.json("Deleted")
+
+
+});
 
 server.listen(3000);
 process.on("SIGINT", () => {
